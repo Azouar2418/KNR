@@ -9,6 +9,10 @@ on:
 jobs:
   php-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +45,20 @@ jobs:
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
     - name: Install Dependencies
-      run: composer update --no-interaction --no-progress --prefer-dist
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set +e
+        composer update --no-interaction --no-progress --prefer-dist 2>&1 | tee /tmp/composer-install.log
+        status=${PIPESTATUS[0]}
+        if [ $status -ne 0 ]; then
+          tail -80 /tmp/composer-install.log > /tmp/composer-tail.log
+          gh pr comment 5 --repo Azouar2418/KNR --body "$(printf '### Composer install failure (%s)
+```
+%s
+```' "${{ matrix.php-version }}" "$(cat /tmp/composer-tail.log)")" || true
+          exit $status
+        fi
 
     - name: Generate key
       run: php artisan key:generate

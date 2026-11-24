@@ -35,7 +35,7 @@ class UserController extends Controller
       $usersQuery->where("username", "LIKE", "%$username%");
     }
 
-    $users = $usersQuery->latest()->fastPaginate(20);
+    $users = $usersQuery->with('roles')->latest()->fastPaginate(20);
     return view("dashboard.users.index", compact("users"));
   }
 
@@ -156,7 +156,7 @@ class UserController extends Controller
 
     if ($request->filled("filter")) {
       $username = $request->input("filter");
-      $usersQuery->where("values->username", "LIKE", "%$username%");
+      $usersQuery->where("username", "LIKE", "%{$username}%");
     }
 
     $users = $usersQuery->latest()->fastPaginate(20);

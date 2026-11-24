@@ -8,5 +8,5 @@ Route::prefix("roles")->group(function () {
   Route::post("/store", [RoleController::class, "store"])->middleware(["permission:create_roles"])->name("dashboard.roles.store");
   Route::get("/edit/{role}", [RoleController::class, "edit"])->middleware(["permission:edit_roles"])->name("dashboard.roles.edit");
   Route::put("/update/{role}", [RoleController::class, "update"])->middleware(["permission:edit_roles"])->name("dashboard.roles.update");
-  Route::get("/delete/{role}", [RoleController::class, "delete"])->middleware(["permission:delete_roles"])->name("dashboard.roles.delete");
+  Route::delete("/delete/{role}", [RoleController::class, "delete"])->middleware(["permission:delete_roles"])->name("dashboard.roles.delete");
 });

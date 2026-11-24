@@ -52,16 +52,13 @@ class MangaController extends Controller
     }
 
     $mangas = $resultQuery
+      ->with(['types:id,title', 'statuses:id,title', 'genres:id,title,slug'])
       ->latest()
       ->fastPaginate(24)
       ->through(function ($manga) {
-        $manga->type_title = $manga->types()->first()->title ?? null;
-        $manga->status_title = $manga->statuses()->first()->title ?? null;
-        $manga->genres = $manga
-          ->genres()
-          ->select(["title", "slug"])
-          ->get()
-          ->take(5);
+        $manga->type_title = $manga->types->first()->title ?? null;
+        $manga->status_title = $manga->statuses->first()->title ?? null;
+        $manga->genres = $manga->genres->take(5)->values();
         return $manga;
       });
 

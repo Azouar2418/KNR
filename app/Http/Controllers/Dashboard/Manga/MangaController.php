@@ -50,12 +50,14 @@ class MangaController extends Controller
     }
 
     $mangas = $mangasQuery
+      ->with(['types:id,title', 'statuses:id,title', 'user:id,username'])
+      ->withSum('views', 'views')
       ->latest()
       ->fastPaginate(20)
       ->through(function ($manga) {
-        $manga->views = $manga->totalViews();
-        $manga->type_title = $manga->types()->first()->title ?? null;
-        $manga->status_title = $manga->statuses()->first()->title ?? null;
+        $manga->views = (int) ($manga->views_sum ?? 0);
+        $manga->type_title = $manga->types->first()->title ?? null;
+        $manga->status_title = $manga->statuses->first()->title ?? null;
         return $manga;
       });
 
@@ -192,11 +194,9 @@ class MangaController extends Controller
    */
   public function delete(Manga $manga)
   {
-    $manga->chapters()->delete();
-    $manga->comments()->delete();
-    $manga->views()->delete();
     $manga->delete();
-    Cache::flush();
+    Cache::forget("manga_query_" . $manga->id);
+    CacheHelper::forgetCache();
     return back()->with("success", __("Manga has been deleted."));
   }
 
@@ -207,11 +207,11 @@ class MangaController extends Controller
    */
   public function deleted(Request $request)
   {
-    $mangasQuery = Manga::onlyTrashed();
+    $mangasQuery = Manga::onlyTrashed()->with('user:id,username')->withSum('views', 'views');
 
     if ($request->filled("filter")) {
       $title = $request->input("filter");
-      $mangasQuery->where("values->title", "LIKE", "%$title%");
+      $mangasQuery->where("title", "LIKE", "%{$title}%");
     }
 
     $mangas = $mangasQuery->latest()->fastPaginate(20);

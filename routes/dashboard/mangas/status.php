@@ -9,6 +9,6 @@ Route::prefix('status')->group(
         Route::post('/store', [StatusController::class, 'store'])->middleware(['permission:create_taxonomies'])->name('dashboard.mangas_status.store');
         Route::get('/edit/{id}', [StatusController::class, 'edit'])->middleware(['permission:edit_taxonomies'])->name('dashboard.mangas_status.edit');
         Route::put('/update/{id}', [StatusController::class, 'update'])->middleware(['permission:edit_taxonomies'])->name('dashboard.mangas_status.update');
-        Route::get('/delete/{id}', [StatusController::class, 'delete'])->middleware(['permission:delete_taxonomies'])->name('dashboard.mangas_status.delete');
+        Route::delete('/delete/{id}', [StatusController::class, 'delete'])->middleware(['permission:delete_taxonomies'])->name('dashboard.mangas_status.delete');
     }
 );

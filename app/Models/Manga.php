@@ -18,8 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 class Manga extends Model
 {
-  // use HasFactory, SoftDeletes;
-  use HasFactory;
+  use HasFactory, SoftDeletes;
 
   protected $fillable = [
     "title",
@@ -80,6 +79,10 @@ class Manga extends Model
 
   public function totalViews()
   {
+    if (array_key_exists("views_sum", $this->attributes)) {
+      return (int) ($this->attributes["views_sum"] ?? 0);
+    }
+
     return View::where("model", self::class)
       ->where("key", $this->id)
       ->sum("views");

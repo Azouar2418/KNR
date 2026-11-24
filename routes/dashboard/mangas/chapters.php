@@ -13,7 +13,7 @@ Route::prefix('chapters')->group(
         Route::get('/edit/{chapter}', [ChapterController::class, 'edit'])->middleware(['permission:edit_own_chapters|edit_all_chapters'])->name('dashboard.chapters.edit');
         Route::put('/update/{chapter}', [ChapterController::class, 'update'])->middleware(['permission:edit_own_chapters|edit_all_chapters'])->name('dashboard.chapters.update');
         Route::post('/update-content/{chapter}', [ChapterController::class, 'updateContent'])->middleware(['permission:edit_own_chapters|edit_all_chapters'])->name('dashboard.chapters.update-content');
-        Route::get('/delete/{chapter}', [ChapterController::class, 'delete'])->middleware(['permission:delete_own_chapters|delete_all_chapters'])->name('dashboard.chapters.delete');
+        Route::delete('/delete/{chapter}', [ChapterController::class, 'delete'])->middleware(['permission:delete_own_chapters|delete_all_chapters'])->name('dashboard.chapters.delete');
         Route::prefix('bulk')->group(
             function () {
                 Route::get('/create', [BulkController::class, 'create'])->middleware(['permission:bulk_upload_chapters'])->name('dashboard.chapters.bulk.create');

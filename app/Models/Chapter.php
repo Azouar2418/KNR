@@ -9,7 +9,7 @@ use App\Models\Manga;
 use App\Models\Comment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * App\Models\Chapter
@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 class Chapter extends Model
 {
-  use HasFactory;
+  use HasFactory, SoftDeletes;
 
   protected $fillable = ["chapter_number", "title", "manga_id", "user_id", "content"];
 
@@ -47,6 +47,10 @@ class Chapter extends Model
 
   public function totalViews()
   {
+    if (array_key_exists("views_sum", $this->attributes)) {
+      return (int) ($this->attributes["views_sum"] ?? 0);
+    }
+
     return View::where("model", self::class)
       ->where("key", $this->id)
       ->sum("views");

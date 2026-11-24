@@ -59,7 +59,7 @@ class ChapterController extends Controller
       $chaptersQuery->where("manga_id", $request->input("manga"));
     }
 
-    $chapters = $chaptersQuery->latest()->fastPaginate(20);
+    $chapters = $chaptersQuery->with(['manga:id,title,slug', 'user:id,username'])->withSum('views', 'views')->latest()->fastPaginate(20);
 
     return view("dashboard.chapters.index", compact("chapters"));
   }
@@ -209,7 +209,7 @@ class ChapterController extends Controller
     Comment::where("commentable_type", Chapter::class)
       ->where("commentable_id", $chapter->id)
       ->delete();
-    $chapter->delete();
+    $chapter->forceDelete();
 
     return back()->with("success", __("Chapter has been deleted"));
   }
