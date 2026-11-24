@@ -52,11 +52,13 @@ jobs:
         composer update --no-interaction --no-progress --prefer-dist 2>&1 | tee /tmp/composer-install.log
         status=${PIPESTATUS[0]}
         if [ $status -ne 0 ]; then
-          tail -80 /tmp/composer-install.log > /tmp/composer-tail.log
-          gh pr comment 5 --repo Azouar2418/KNR --body "$(printf '### Composer install failure (%s)
-```
-%s
-```' "${{ matrix.php-version }}" "$(cat /tmp/composer-tail.log)")" || true
+          {
+            echo "### Composer install failure (${{ matrix.php-version }})"
+            echo '```'
+            tail -80 /tmp/composer-install.log
+            echo '```'
+          } > /tmp/composer-comment.md
+          gh pr comment 5 --repo Azouar2418/KNR --body-file /tmp/composer-comment.md || true
           exit $status
         fi
 
