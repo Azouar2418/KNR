@@ -52,10 +52,11 @@ jobs:
       run: |
         set +e
         export GIT_TERMINAL_PROMPT=0
-        git config --global --unset-all credential.helper || true
-        git config --local --unset-all credential.helper || true
-        git config --global --unset-all http.https://github.com/.extraheader || true
-        git config --local --unset-all http.https://github.com/.extraheader || true
+        for scope in --global --local; do
+          git config $scope --unset-all credential.helper || true
+          git config $scope --unset-all http.https://github.com/.extraheader || true
+          git config $scope --get-regexp '^url\..*github\.com.*\.insteadof$' | awk '{print $1}' | sort -u | while read -r k; do git config $scope --unset-all "$k" || true; done
+        done
         git config --global url."https://github.com/".insteadOf "git@github.com:" || true
         composer config --global --unset github-oauth.github.com || true
         composer config --no-plugins audit.block-insecure false || true
