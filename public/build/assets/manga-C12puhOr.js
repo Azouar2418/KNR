@@ -1,0 +1,1 @@
+import{t as e}from"./tom-select.complete-CI27YaYj.js";new e(`#input-tags`,{plugins:{remove_button:{title:`Remove this item`},restore_on_backspace:{}},persist:!1,createOnBlur:!0,create:!0,onItemAdd:function(){this.setTextboxValue(``),this.refreshOptions()}});

@@ -1,0 +1,1 @@
+function e(){let e=document.querySelectorAll(`#close-ad`);e&&e.forEach(e=>{e.addEventListener(`click`,t=>{t.preventDefault(),e.parentNode.remove()})})}export{e as initializeCloseAds};
