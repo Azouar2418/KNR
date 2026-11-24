@@ -57,7 +57,7 @@ jobs:
         git config --global --unset-all http.https://github.com/.extraheader || true
         git config --local --unset-all http.https://github.com/.extraheader || true
         git config --global url."https://github.com/".insteadOf "git@github.com:" || true
-        git config --global url."https://${GH_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" || true
+        composer config --global --unset github-oauth.github.com || true
         composer config --no-plugins audit.block-insecure false || true
         composer update --no-interaction --no-progress --prefer-dist 2>&1 | tee /tmp/composer-install.log
         status=${PIPESTATUS[0]}
