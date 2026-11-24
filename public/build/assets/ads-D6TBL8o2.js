@@ -1,0 +1,1 @@
+function e(){let e=document.querySelector(`#ad-type`),t=document.querySelector(`#ad-banner`),n=document.querySelector(`#ad-script`);if(e){function r(){e.value===`banner`?(t.classList.remove(`hidden`),n.classList.add(`hidden`)):(t.classList.add(`hidden`),n.classList.remove(`hidden`))}r(),e.addEventListener(`change`,r)}}export{e as initializeAds};

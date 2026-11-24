@@ -1,0 +1,1 @@
+import{t as e}from"./tom-select.complete-CI27YaYj.js";function t(){document.querySelector(`#tom-select`)&&new e(`#tom-select`,{create:!1}),document.querySelector(`.ts-wrapper`)?.classList.remove(`hidden`)}export{t as initializeSelection};
