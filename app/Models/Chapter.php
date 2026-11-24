@@ -59,30 +59,41 @@ class Chapter extends Model
 
   public function addView()
   {
-    // Find an existing view for today with the same model and key
-    $existingView = View::where([
+    $today = Carbon::today();
+
+    $updated = View::where([
       "model" => Chapter::class,
       "key" => $this->id,
-    ])
-      ->whereDate("created_at", "=", Carbon::now()->format("Y-m-d"))
-      ->first();
+      "created_at" => $today,
+    ])->increment("views");
 
-    if ($existingView) {
-      // If an existing view is found, increment its views column
-      $existingView->increment("views");
-      return $existingView;
-    } else {
-      // If no existing view is found, create a new view with views = 1 and today's date at 00:00
-      $view = new View([
+    if ($updated) {
+      return View::where([
+        "model" => Chapter::class,
+        "key" => $this->id,
+        "created_at" => $today,
+      ])->first();
+    }
+
+    try {
+      return View::create([
         "model" => Chapter::class,
         "key" => $this->id,
         "views" => 1,
-        "created_at" => Carbon::today(),
+        "created_at" => $today,
       ]);
+    } catch (\Illuminate\Database\QueryException $e) {
+      View::where([
+        "model" => Chapter::class,
+        "key" => $this->id,
+        "created_at" => $today,
+      ])->increment("views");
 
-      $this->views()->save($view);
-
-      return $view;
+      return View::where([
+        "model" => Chapter::class,
+        "key" => $this->id,
+        "created_at" => $today,
+      ])->first();
     }
   }
 

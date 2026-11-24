@@ -277,22 +277,27 @@ class ChapterHelper
   public static function uploadChapter(Request $request)
   {
     try {
-      // $tempDir = storage_path("app/temp_upload_" . auth()->user()->username);
       File::ensureDirectoryExists(self::TEMP_DIR);
 
       if ($request->hasFile("file")) {
-        // TODO: Check if image before processing
-
         $image = $request->file("file");
+        $validator = Validator::make(['file' => $image], [
+          'file' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:51200',
+        ]);
+
+        if ($validator->fails()) {
+          return response()->json(["error" => $validator->errors()->first()], 422);
+        }
+
         $file_name = self::processImage($image);
 
         return response()->json(["success" => __("Image has been uploaded"), "filename" => $file_name]);
-      } else {
-        return response()->json(["error" => "Invalid file"]);
       }
+
+      return response()->json(["error" => "Invalid file"], 422);
     } catch (Exception $e) {
       Log::error($e->getMessage());
-      return response()->json(["error" => "An error occurred"]);
+      return response()->json(["error" => "An error occurred"], 500);
     }
   }
 
@@ -405,9 +410,22 @@ class ChapterHelper
 
       // Extract the ZIP File to random folder name
       $file_path = storage_path("app/" . self::TEMP_DIR . "/" . basename($request["file"]));
-      $extractedPath = storage_path("app/" . self::TEMP_DIR . "/" . Str::random(4));
+      $extractedPath = storage_path("app/" . self::TEMP_DIR . "/" . Str::random(12));
       $zip = new ZipArchive();
-      $zip->open($file_path);
+      if ($zip->open($file_path) !== true) {
+        throw new Exception("Invalid zip file.");
+      }
+
+      for ($i = 0; $i < $zip->numFiles; $i++) {
+        $entryName = $zip->getNameIndex($i);
+        if (str_contains($entryName, '..') || str_starts_with($entryName, '/') || str_starts_with($entryName, '\\')) {
+          $zip->close();
+          Storage::delete(self::TEMP_DIR . "/" . basename($file_path));
+          flash()->addError(__("Invalid zip file."));
+          return response()->json(["error" => __("Invalid zip file.")], 422);
+        }
+      }
+
       $zip->extractTo($extractedPath);
       $zip->close();
 
