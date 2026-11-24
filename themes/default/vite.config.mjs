@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
+import tailwindcss from "tailwindcss";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -52,7 +56,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require("tailwindcss")({
+        tailwindcss({
           config: path.resolve(__dirname, "tailwind.config.js"),
         }),
       ],

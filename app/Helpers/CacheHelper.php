@@ -7,7 +7,11 @@ use Illuminate\Support\Facades\Cache;
 
 class CacheHelper
 {
-  public static function remember($cacheKey, $cacheExpiration = null, $callback)
+  /**
+   * Remember a value in the cache. Pass null as $cacheExpiration to use the
+   * default of three hours.
+   */
+  public static function remember($cacheKey, $cacheExpiration, $callback)
   {
     if (!$cacheExpiration) {
       $cacheExpiration = Carbon::now()->addHours(3);
