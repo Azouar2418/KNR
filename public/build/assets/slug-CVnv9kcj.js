@@ -1,0 +1,1 @@
+function e(){let e=document.querySelector(`#title`),t=document.querySelector(`#slug`);e&&t&&e.addEventListener(`input`,function(){let n=e.value.trim().replace(/[^\w\s-]/g,``).replace(/\s+/g,`-`).replace(/-+$/,``);t.value=n.toLowerCase()})}export{e as initializeSlugAutoComplete};

@@ -1,0 +1,13 @@
+{
+  "plugins": ["@prettier/plugin-php", "@shufo/prettier-plugin-blade", "prettier-plugin-tailwindcss"],
+  "trailingComma": "es5",
+  "tailwindConfig": "./themes/default/tailwind.config.js",
+  "overrides": [
+    {
+      "files": ["*.blade.php"],
+      "options": {
+        "parser": "blade"
+      }
+    }
+  ]
+}

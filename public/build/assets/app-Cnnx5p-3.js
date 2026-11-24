@@ -1,0 +1,1 @@
+import{initializeDarkTheme as e}from"./darkToggle-DnpvomsL.js";import{initializeForms as t}from"./formsBtn-DutACQM7.js";import{initializeDropdowns as n}from"./dropDown-HveocsN-.js";import{initializeCloseAds as r}from"./closeAds-Ddkps9JE.js";document.addEventListener(`DOMContentLoaded`,function(){e(),t(),n(),r()});
