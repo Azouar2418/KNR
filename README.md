@@ -1,6 +1,6 @@
 # KNR
 
-A manga / manhwa reading CMS built with **Laravel 10** (PHP 8.1+).
+A manga / manhwa reading CMS built with **Laravel 10** (PHP 8.2+).
 
 ## Features
 
@@ -15,7 +15,7 @@ A manga / manhwa reading CMS built with **Laravel 10** (PHP 8.1+).
 
 ## Requirements
 
-- PHP 8.1 or newer (with `gd`, `mbstring`, `fileinfo`, `pdo_mysql`)
+- PHP 8.2 or newer (with `gd`, `mbstring`, `fileinfo`, `pdo_mysql`, `zip`)
 - Composer
 - Node.js 18+ (only to rebuild frontend assets)
 - MySQL / MariaDB

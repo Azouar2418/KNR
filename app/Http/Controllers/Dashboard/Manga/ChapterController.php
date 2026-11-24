@@ -129,6 +129,8 @@ class ChapterController extends Controller
    */
   public function update(Request $request, Chapter $chapter)
   {
+    $this->authorize("update", $chapter);
+
     $formData = $request->validate([
       "title" => "nullable",
       "manga_id" => "required",
@@ -179,6 +181,8 @@ class ChapterController extends Controller
 
   public function updateContent(Chapter $chapter, Request $request)
   {
+    $this->authorize("update", $chapter);
+
     return ChapterHelper::updateContent($chapter, $request);
   }
 
