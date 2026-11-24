@@ -41,13 +41,7 @@ jobs:
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
     - name: Install Dependencies
-      run: |
-        if composer install --no-interaction --no-progress --prefer-dist; then
-          echo "Installed from lockfile"
-        else
-          echo "Lockfile incompatible, updating dependencies"
-          composer update --no-interaction --no-progress --prefer-dist
-        fi
+      run: composer update --no-interaction --no-progress --prefer-dist
 
     - name: Generate key
       run: php artisan key:generate
