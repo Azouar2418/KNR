@@ -59,7 +59,7 @@ class ChapterController extends Controller
       $chaptersQuery->where("manga_id", $request->input("manga"));
     }
 
-    $chapters = $chaptersQuery->latest()->fastPaginate(20);
+    $chapters = $chaptersQuery->with(['manga:id,title,slug', 'user:id,username'])->withSum('views', 'views')->latest()->fastPaginate(20);
 
     return view("dashboard.chapters.index", compact("chapters"));
   }
@@ -129,6 +129,8 @@ class ChapterController extends Controller
    */
   public function update(Request $request, Chapter $chapter)
   {
+    $this->authorize("update", $chapter);
+
     $formData = $request->validate([
       "title" => "nullable",
       "manga_id" => "required",
@@ -179,6 +181,8 @@ class ChapterController extends Controller
 
   public function updateContent(Chapter $chapter, Request $request)
   {
+    $this->authorize("update", $chapter);
+
     return ChapterHelper::updateContent($chapter, $request);
   }
 
@@ -205,7 +209,7 @@ class ChapterController extends Controller
     Comment::where("commentable_type", Chapter::class)
       ->where("commentable_id", $chapter->id)
       ->delete();
-    $chapter->delete();
+    $chapter->forceDelete();
 
     return back()->with("success", __("Chapter has been deleted"));
   }

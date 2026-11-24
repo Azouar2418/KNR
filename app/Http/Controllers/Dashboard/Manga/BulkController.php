@@ -15,10 +15,7 @@ class BulkController extends Controller
    */
   public function __construct()
   {
-    $this->middleware("can:viewAny," . Chapter::class)->only("index");
-    $this->middleware("can:create," . Chapter::class)->only(["create", "store"]);
-    $this->middleware("can:update,chapter")->only(["edit", "update"]);
-    $this->middleware("can:delete,chapter")->only("delete");
+    $this->middleware("can:create," . Chapter::class)->only(["create", "store", "upload"]);
   }
 
   /**

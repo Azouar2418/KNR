@@ -3,38 +3,44 @@
 namespace App\Http\Controllers\Comments;
 
 use App\Http\Controllers\Controller;
+use App\Models\Chapter;
 use App\Models\Comment;
+use App\Models\Manga;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class CommentController extends Controller
 {
+  private const ALLOWED_COMMENTABLES = [
+    Manga::class,
+    Chapter::class,
+  ];
+
   public function store(Request $request)
   {
-    $request->validate([
+    $validated = $request->validate([
       "comment" => "required|min:10|max:500",
+      "type" => "required|string",
+      "key" => "required|integer",
     ]);
 
-    $commentableType = $request->type;
-    if (!class_exists($commentableType)) {
+    $commentableType = $validated["type"];
+    if (!in_array($commentableType, self::ALLOWED_COMMENTABLES, true)) {
       return back()->with("error", __("Invalid commentable type."));
     }
 
-    // Create a new comment
+    $content = $commentableType::findOrFail($validated["key"]);
+
     $comment = new Comment();
     $comment->user_id = auth()->id();
-    $comment->content = $request->input("comment");
+    $comment->content = $validated["comment"];
     $comment->commentable_type = $commentableType;
-    $comment->commentable_id = $request->key;
-
-    // Security Check: Check if the commentable item exists
-    $content = $request->type::findOrFail($request->key);
-
+    $comment->commentable_id = $content->id;
     $comment->save();
 
-    Cache::forget("comments_" . $content->slug . $content->id);
+    $slug = $content->slug ?? $content->id;
+    Cache::forget("comments_" . $slug . $content->id);
 
-    // Redirect back or perform any other actions
     return back()->with("success", __("Comment has been commented"));
   }
 
@@ -48,8 +54,8 @@ class CommentController extends Controller
     ) {
       $comment->delete();
       return back()->with("success", __("Comment deleted successfully"));
-    } else {
-      abort(403);
     }
+
+    abort(403);
   }
 }

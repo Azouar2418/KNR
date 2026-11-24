@@ -4,14 +4,16 @@ export function initializeDeleteModals() {
   deleteBtns.forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
-      var link = e.target.href;
-      showModal(link); // Pass the delete button link to showModal function
+      const target = e.currentTarget;
+      const link = target.getAttribute("href") || target.href;
+      const method = target.getAttribute("data-method") || "DELETE";
+      showModal(link, method);
     });
   });
 
-  function showModal(link) {
+  function showModal(link, method = "DELETE") {
     const modalBackground = createModalElement();
-    const modalContent = createModalContent(link);
+    const modalContent = createModalContent(link, method);
 
     modalBackground.addEventListener("click", hideModal); // Clicking on the modal background will close the modal
 
@@ -31,14 +33,14 @@ export function initializeDeleteModals() {
     return modalBackground;
   }
 
-  function createModalContent(link) {
+  function createModalContent(link, method = "DELETE") {
     const modalContent = document.createElement("div");
     modalContent.className =
       "mx-3 sm:mx-0 cursor-auto text-sm border-[1px] border-black/10 bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-auto dark:border-white/10 dark:bg-[#09090b]";
 
     const modalMessage = createModalMessage();
     const modalSubMsg = createModalSubMessage();
-    const btnsContainer = createModalButtons(link);
+    const btnsContainer = createModalButtons(link, method);
 
     modalContent.appendChild(modalMessage);
     modalContent.appendChild(modalSubMsg);
@@ -61,12 +63,12 @@ export function initializeDeleteModals() {
     return modalSubMsg;
   }
 
-  function createModalButtons(link) {
+  function createModalButtons(link, method = "DELETE") {
     const btnsContainer = document.createElement("div");
     btnsContainer.className = "flex gap-3 justify-end mt-6";
 
     const cancelButton = createCancelButton();
-    const primaryButton = createPrimaryButton(link);
+    const primaryButton = createPrimaryButton(link, method);
 
     btnsContainer.appendChild(primaryButton);
     btnsContainer.appendChild(cancelButton);
@@ -83,14 +85,37 @@ export function initializeDeleteModals() {
     return cancelButton;
   }
 
-  function createPrimaryButton(link) {
-    const primaryButton = document.createElement("a");
-    primaryButton.href = link;
+  function createPrimaryButton(link, method = "DELETE") {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = link;
+    form.style.display = "inline";
+
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    if (csrf) {
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "_token";
+      csrfInput.value = csrf;
+      form.appendChild(csrfInput);
+    }
+
+    if (method.toUpperCase() !== "POST") {
+      const methodInput = document.createElement("input");
+      methodInput.type = "hidden";
+      methodInput.name = "_method";
+      methodInput.value = method.toUpperCase();
+      form.appendChild(methodInput);
+    }
+
+    const primaryButton = document.createElement("button");
+    primaryButton.type = "submit";
     primaryButton.className =
       "px-6 py-2 bg-[#09090b] hover:bg-[#09090b]/90 text-white rounded-md font-medium dark:bg-white dark:text-black dark:hover:bg-white/90";
     primaryButton.textContent = "Submit";
     primaryButton.addEventListener("click", hideModal);
-    return primaryButton;
+    form.appendChild(primaryButton);
+    return form;
   }
 
   function hideModal() {

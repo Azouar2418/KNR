@@ -27,10 +27,11 @@
                 $manga->slug,
                 \Illuminate\Support\Str::limit(strip_tags($manga->description), 50, $end = '...'),
                 $manga->user->username,
-                $manga->views->count(),
-    
-                'restore' => route('dashboard.mangas.restore', $manga->id),
-                'delete' => route('dashboard.mangas.hard_delete', $manga->id),
+                $manga->totalViews(),
+                'actions' => [
+                    __('Restore') => route('dashboard.mangas.restore', $manga->id),
+                    __('Delete') => route('dashboard.mangas.hard_delete', $manga->id),
+                ],
             ];
         })
         ->toArray()" />

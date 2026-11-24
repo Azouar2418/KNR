@@ -9,6 +9,6 @@ Route::prefix('types')->group(
         Route::post('/store', [TypeController::class, 'store'])->middleware(['permission:create_taxonomies'])->name('dashboard.mangas_types.store');
         Route::get('/edit/{id}', [TypeController::class, 'edit'])->middleware(['permission:edit_taxonomies'])->name('dashboard.mangas_types.edit');
         Route::put('/update/{id}', [TypeController::class, 'update'])->middleware(['permission:edit_taxonomies'])->name('dashboard.mangas_types.update');
-        Route::get('/delete/{id}', [TypeController::class, 'delete'])->middleware(['permission:delete_taxonomies'])->name('dashboard.mangas_types.delete');
+        Route::delete('/delete/{id}', [TypeController::class, 'delete'])->middleware(['permission:delete_taxonomies'])->name('dashboard.mangas_types.delete');
     }
 );

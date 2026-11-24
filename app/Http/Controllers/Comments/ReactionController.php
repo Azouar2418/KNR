@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Comments;
 
 use App\Models\Comment;
-use Illuminate\Http\Request;
 use App\Models\CommentReaction;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ReactionController
@@ -17,33 +17,60 @@ class ReactionController
    */
   public function toggleReaction(Request $request, Comment $comment)
   {
-    $user_id = auth()->id();
-    $type = $request->input("type");
+    $validated = $request->validate([
+      "type" => "required|integer|in:1,2",
+    ]);
 
-    // Todo: add a check for type to make sure it's 1 or 2
+    $userId = auth()->id();
+    $type = (int) $validated["type"];
 
-    $reaction = CommentReaction::where("user_id", $user_id)
+    $reaction = CommentReaction::where("user_id", $userId)
       ->where("comment_id", $comment->id)
       ->first();
 
     if ($reaction) {
-      $reaction->delete();
-      return response()->json(["message" => "success", "type" => $reaction->type == 1 ? "removing" : "adding", "toggle" => true]);
-    } else {
-      // If no reaction exists, create a new one
-      $reaction = new CommentReaction();
-      $reaction->user_id = $user_id;
-      $reaction->comment_id = $comment->id;
+      if ((int) $reaction->type === $type) {
+        $reaction->delete();
+        $this->forgetCommentCache($comment);
+        return response()->json([
+          "message" => "success",
+          "type" => $type === 1 ? "removing" : "removing",
+          "action" => "removed",
+        ]);
+      }
+
       $reaction->type = $type;
       $reaction->save();
+      $this->forgetCommentCache($comment);
+      return response()->json([
+        "message" => "success",
+        "type" => $type === 1 ? "adding" : "adding",
+        "action" => "switched",
+        "toggle" => true,
+      ]);
     }
 
-    $content = $comment->commentable_type::findOrFail($comment->commentable_id);
-    Cache::forget("comments_" . $content->slug . $content->id);
+    $reaction = new CommentReaction();
+    $reaction->user_id = $userId;
+    $reaction->comment_id = $comment->id;
+    $reaction->type = $type;
+    $reaction->save();
+
+    $this->forgetCommentCache($comment);
 
     return response()->json([
       "message" => "success",
-      "type" => $type == 1 ? "adding" : "removing",
+      "type" => $type === 1 ? "adding" : "adding",
+      "action" => "added",
     ]);
+  }
+
+  private function forgetCommentCache(Comment $comment): void
+  {
+    $content = $comment->commentable;
+    if ($content) {
+      $slug = $content->slug ?? $content->id;
+      Cache::forget("comments_" . $slug . $content->id);
+    }
   }
 }

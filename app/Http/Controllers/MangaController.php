@@ -52,16 +52,13 @@ class MangaController extends Controller
     }
 
     $mangas = $resultQuery
+      ->with(['types:id,title', 'statuses:id,title', 'genres:id,title,slug'])
       ->latest()
       ->fastPaginate(24)
       ->through(function ($manga) {
-        $manga->type_title = $manga->types()->first()->title ?? null;
-        $manga->status_title = $manga->statuses()->first()->title ?? null;
-        $manga->genres = $manga
-          ->genres()
-          ->select(["title", "slug"])
-          ->get()
-          ->take(5);
+        $manga->type_title = $manga->types->first()->title ?? null;
+        $manga->status_title = $manga->statuses->first()->title ?? null;
+        $manga->genres = $manga->genres->take(5)->values();
         return $manga;
       });
 
@@ -118,33 +115,34 @@ class MangaController extends Controller
   private function getCachedComments(Manga $manga)
   {
     $comments = Cache::remember("comments_" . $manga->slug . $manga->id, Carbon::now()->addHours(3), function () use ($manga) {
-      $comments = $manga->comments;
-      $comments = $comments->map(function ($comment) {
-        if (auth()->check()) {
-          $comment->liked = auth()
-            ->user()
-            ->reactions()
-            ->where("comment_id", $comment->id)
-            ->where("type", 1)
-            ->count();
-
-          $comment->disliked = auth()
-            ->user()
-            ->reactions()
-            ->where("comment_id", $comment->id)
-            ->where("type", 2)
-            ->count();
-        } else {
-          $comment->liked = null;
-          $comment->disliked = null;
-        }
+      return $manga->comments->map(function ($comment) {
         $comment->sum_count = $comment->likesSum();
         $comment->user_avatar = $comment->user->avatar;
         return $comment;
-      });
-
-      return $comments;
+      })->values();
     });
+
+    if (auth()->check()) {
+      $reactions = auth()
+        ->user()
+        ->reactions()
+        ->whereIn("comment_id", $comments->pluck("id"))
+        ->get(["comment_id", "type"])
+        ->keyBy("comment_id");
+
+      $comments = $comments->map(function ($comment) use ($reactions) {
+        $reaction = $reactions->get($comment->id);
+        $comment->liked = $reaction && (int) $reaction->type === 1 ? 1 : 0;
+        $comment->disliked = $reaction && (int) $reaction->type === 2 ? 1 : 0;
+        return $comment;
+      });
+    } else {
+      $comments = $comments->map(function ($comment) {
+        $comment->liked = null;
+        $comment->disliked = null;
+        return $comment;
+      });
+    }
 
     return $comments->sortByDesc("sum_count")->values();
   }

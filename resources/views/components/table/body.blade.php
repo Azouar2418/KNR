@@ -31,11 +31,26 @@
           <x-dropdown>
             @foreach ($content['actions'] as $name => $route)
               @php
-                $dataToggle = $name == __('Delete') ? 'delete' : $name;
+                $isDelete = $name == __('Delete');
+                $isRestore = $name == __('Restore');
               @endphp
-              <x-dropdown-link data-toggle="{{ $dataToggle }}" data-id="{{ $content['id'] ?? '' }}" href="{{ $route }}">
-                {{ $name }}
-              </x-dropdown-link>
+              @if ($isDelete)
+                <x-dropdown-link data-toggle="delete" data-method="DELETE" data-id="{{ $content['id'] ?? '' }}" href="{{ $route }}">
+                  {{ $name }}
+                </x-dropdown-link>
+              @elseif ($isRestore)
+                <form method="POST" action="{{ $route }}">
+                  @csrf
+                  <button type="submit"
+                    class="cursor-pointer py-1 text-left w-full sm:px-2 sm:hover:rounded-sm sm:hover:bg-black/10 sm:dark:hover:bg-white/10 duration-200 transition-colors">
+                    {{ $name }}
+                  </button>
+                </form>
+              @else
+                <x-dropdown-link href="{{ $route }}">
+                  {{ $name }}
+                </x-dropdown-link>
+              @endif
             @endforeach
           </x-dropdown>
         </td>

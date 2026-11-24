@@ -59,6 +59,23 @@ class ChapterHelper
   }
 
   /**
+   * Ensure a user-provided filename is a safe basename.
+   */
+  public static function assertSafeFilename(string $filename): string
+  {
+    $base = basename($filename);
+    if ($base !== $filename || preg_match('/[\/\\\\\x00]/', $filename) || str_contains($filename, '..')) {
+      throw new Exception("Invalid file name.");
+    }
+
+    if (!preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/', $base)) {
+      throw new Exception("Invalid file name.");
+    }
+
+    return $base;
+  }
+
+  /**
    * Generate a unique image name.
    *
    * @param string $mangaSlug
@@ -73,7 +90,6 @@ class ChapterHelper
 
   /**
    * Store an image.
-   *
    * @param string $imageContent
    * @param string $imageName
    * @param string $mangaSlug
@@ -90,17 +106,18 @@ class ChapterHelper
         $destinationPath = self::getChapterImagePath($mangaSlug, $chapterNumber, $extension);
         Storage::put($destinationPath, $imgData, "public");
         return basename($destinationPath);
-      } else {
-        $chapterPath = self::TARGET_DIR . "/{$mangaSlug}/{$chapterNumber}";
-
-        if (!Storage::exists($chapterPath)) {
-          Storage::makeDirectory($chapterPath);
-        }
-
-        $destinationPath = "{$chapterPath}";
-        $imageName = basename(Storage::put($destinationPath, $imageContent, "public"));
-        return $imageName;
       }
+
+      $chapterPath = self::TARGET_DIR . "/{$mangaSlug}/{$chapterNumber}";
+
+      if (!Storage::exists($chapterPath)) {
+        Storage::makeDirectory($chapterPath);
+      }
+
+      $imageName = self::generateUniqueImageName($mangaSlug, $chapterNumber, $extension);
+      $destinationPath = "{$chapterPath}/{$imageName}";
+      Storage::put($destinationPath, $imageContent, "public");
+      return basename($destinationPath);
     } catch (Exception $e) {
       Log::error($e->getMessage());
       throw new Exception("Error processing image: " . $e->getMessage());
@@ -260,22 +277,27 @@ class ChapterHelper
   public static function uploadChapter(Request $request)
   {
     try {
-      // $tempDir = storage_path("app/temp_upload_" . auth()->user()->username);
       File::ensureDirectoryExists(self::TEMP_DIR);
 
       if ($request->hasFile("file")) {
-        // TODO: Check if image before processing
-
         $image = $request->file("file");
+        $validator = Validator::make(['file' => $image], [
+          'file' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:51200',
+        ]);
+
+        if ($validator->fails()) {
+          return response()->json(["error" => $validator->errors()->first()], 422);
+        }
+
         $file_name = self::processImage($image);
 
         return response()->json(["success" => __("Image has been uploaded"), "filename" => $file_name]);
-      } else {
-        return response()->json(["error" => "Invalid file"]);
       }
+
+      return response()->json(["error" => "Invalid file"], 422);
     } catch (Exception $e) {
       Log::error($e->getMessage());
-      return response()->json(["error" => "An error occurred"]);
+      return response()->json(["error" => "An error occurred"], 500);
     }
   }
 
@@ -311,8 +333,9 @@ class ChapterHelper
   private static function moveImagesToTargetDirectory($imageNames, $mangaSlug, $chapterNumber)
   {
     foreach ($imageNames as $imageName) {
-      $sourcePath = self::TEMP_DIR . "/" . $imageName;
-      $targetPath = self::TARGET_DIR . "/" . $mangaSlug . "/" . $chapterNumber . "/" . $imageName;
+      $safeName = self::assertSafeFilename((string) $imageName);
+      $sourcePath = self::TEMP_DIR . "/" . $safeName;
+      $targetPath = self::TARGET_DIR . "/" . $mangaSlug . "/" . $chapterNumber . "/" . $safeName;
 
       Storage::move($sourcePath, $targetPath);
     }
@@ -321,7 +344,8 @@ class ChapterHelper
   private static function removeTempImages($imagesNames)
   {
     foreach ($imagesNames as $imageName) {
-      Storage::delete(self::TEMP_DIR . "/" . $imageName);
+      $safeName = self::assertSafeFilename((string) $imageName);
+      Storage::delete(self::TEMP_DIR . "/" . $safeName);
     }
   }
 
@@ -329,12 +353,18 @@ class ChapterHelper
   {
     $image = $request->filename;
 
-    if (Storage::has(self::TEMP_DIR . "/" . $image)) {
-      Storage::delete(self::TEMP_DIR . "/" . $image);
-      return response()->json(["success" => "File removed"]);
-    } else {
-      return response()->json(["error" => "File not found"]);
+    try {
+      $safeName = self::assertSafeFilename((string) $image);
+    } catch (Exception $e) {
+      return response()->json(["error" => "Invalid file name"], 422);
     }
+
+    if (Storage::has(self::TEMP_DIR . "/" . $safeName)) {
+      Storage::delete(self::TEMP_DIR . "/" . $safeName);
+      return response()->json(["success" => "File removed"]);
+    }
+
+    return response()->json(["error" => "File not found"], 404);
   }
 
   public static function getExtension($file)
@@ -380,9 +410,22 @@ class ChapterHelper
 
       // Extract the ZIP File to random folder name
       $file_path = storage_path("app/" . self::TEMP_DIR . "/" . basename($request["file"]));
-      $extractedPath = storage_path("app/" . self::TEMP_DIR . "/" . Str::random(4));
+      $extractedPath = storage_path("app/" . self::TEMP_DIR . "/" . Str::random(12));
       $zip = new ZipArchive();
-      $zip->open($file_path);
+      if ($zip->open($file_path) !== true) {
+        throw new Exception("Invalid zip file.");
+      }
+
+      for ($i = 0; $i < $zip->numFiles; $i++) {
+        $entryName = $zip->getNameIndex($i);
+        if (str_contains($entryName, '..') || str_starts_with($entryName, '/') || str_starts_with($entryName, '\\')) {
+          $zip->close();
+          Storage::delete(self::TEMP_DIR . "/" . basename($file_path));
+          flash()->addError(__("Invalid zip file."));
+          return response()->json(["error" => __("Invalid zip file.")], 422);
+        }
+      }
+
       $zip->extractTo($extractedPath);
       $zip->close();
 

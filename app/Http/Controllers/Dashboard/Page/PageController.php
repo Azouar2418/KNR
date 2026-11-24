@@ -133,7 +133,7 @@ class PageController extends Controller
 
     if ($request->filled("filter")) {
       $title = $request->input("filter");
-      $pagesQuery->where("values->title", "LIKE", "%$title%");
+      $pagesQuery->where("title", "LIKE", "%{$title}%");
     }
 
     $pages_pagination = $pagesQuery->latest()->fastPaginate(20);
