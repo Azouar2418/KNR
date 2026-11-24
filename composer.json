@@ -94,8 +94,32 @@
   "prefer-stable": true,
   "repositories": [
     {
-      "type": "vcs",
-      "url": "https://github.com/iRedux/LaravelInstaller.git"
+      "type": "package",
+      "package": {
+        "name": "iredux/laravel-installer",
+        "version": "dev-master",
+        "dist": {
+          "type": "zip",
+          "url": "https://api.github.com/repos/iRedux/LaravelInstaller/zipball/b3526cb6d45fb12ee2875b8618a1934559fb54e2",
+          "reference": "b3526cb6d45fb12ee2875b8618a1934559fb54e2"
+        },
+        "autoload": {
+          "psr-4": {
+            "RachidLaasri\\LaravelInstaller\\": "src/"
+          }
+        },
+        "extra": {
+          "laravel": {
+            "providers": [
+              "RachidLaasri\\LaravelInstaller\\Providers\\LaravelInstallerServiceProvider"
+            ]
+          }
+        },
+        "require": {
+          "php": ">=8.0.0"
+        },
+        "type": "library"
+      }
     }
   ]
 }
